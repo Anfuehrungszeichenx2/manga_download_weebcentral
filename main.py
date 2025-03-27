@@ -23,19 +23,21 @@ def speichere_kapitel(seiten, kapitel_name):
         }
         request = urllib.request.Request(seite, headers=headers)
         if 'png' in seite:
-            filename = f'{aktueller_ordner}/{index+1}.png'
+            filename = f'{aktueller_ordner}/{index + 1}.png'
         elif 'jpg' in seite:
-            filename = f'{aktueller_ordner}/{index+1}.jpg'
-        with urllib.request.urlopen(request) as response:
-            with open(filename, 'wb') as out_file:
-                while True:
-                    try:
+            filename = f'{aktueller_ordner}/{index + 1}.jpg'
+        while True:
+            try:
+                with urllib.request.urlopen(request) as response:
+                    with open(filename, 'wb') as out_file:
                         out_file.write(response.read())
-                    except Exception as e:
-                        print("Irgendwas ist schief gelaufen")
-                        print(e)
-                        continue
-                    break
+
+            except Exception as e:
+                print("Irgendwas ist schief gelaufen", filename)
+                print(e)
+                os.remove(filename)
+                continue
+            break
 
 
 def bekomme_kapitel(link, driver):
@@ -53,17 +55,22 @@ def bekomme_kapitel(link, driver):
 
 def haupt():
     global wurzel_ordner
+    start = 'https://weebcentral.com/chapters/01J76XYYSBC50VG9PV4RK9KMY9'
     wurzel_ordner = 'I:\manga2'
     options = Options()
     # options.headless = True
     driver = webdriver.Firefox(options=options)
-    driver.get("https://weebcentral.com/chapters/01J76XYYSBC50VG9PV4RK9KMY9")
+
+    driver.get(start)
+
     print("Headless Firefox Initialized")
     anime_name = driver.find_element('css selector',
                                      '#nav-top > div:nth-child(1) > div:nth-child(1) > a:nth-child(1) > div:nth-child(1) > span:nth-child(2)').text
     wurzel_ordner = f'{wurzel_ordner}/{anime_name}'
     if not os.path.isdir(wurzel_ordner):
         os.makedirs(wurzel_ordner)
+    driver.switch_to.window(driver.window_handles[0])
+    bekomme_kapitel(start, driver)
     chapter_button = driver.find_elements("xpath", "/html/body/main/section[1]/div/div[1]/button[1]")
     chapter_button[0].click()
     driver.implicitly_wait(3)
@@ -74,6 +81,7 @@ def haupt():
         driver.switch_to.window(driver.window_handles[0])
         bekomme_kapitel(link, driver)
     sleep(10)
+
     driver.quit()
 
 
